@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env
+*.log
+npm-debug.log*
+.DS_Store
+.nyc_output
+coverage/
+*.tsbuildinfo
+.vercel

@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  MENTOR
+  ADMIN
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String?
+  email     String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions ProjectSubmission[] @relation("StudentSubmissions")
+  reviews     ProjectSubmission[] @relation("MentorReviews")
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model ProjectSubmission {
+  id          String           @id @default(uuid())
+  projectName String           @db.VarChar(100)
+  repoUrl     String           @db.Text
+  liveUrl     String           @db.Text
+  description String           @db.Text
+  status      SubmissionStatus @default(PENDING)
+  feedback    String?          @db.Text
+
+  studentId   String
+  student     User             @relation("StudentSubmissions", fields: [studentId], references: [id], onDelete: Cascade)
+
+  reviewerId  String?
+  reviewer    User?            @relation("MentorReviews", fields: [reviewerId], references: [id], onDelete: SetNull)
+  reviewedAt  DateTime?
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([studentId, projectName], name: "unique_student_project_name")
+
+  @@index([studentId])
+  @@index([status])
+  @@index([reviewerId])
+  @@index([createdAt(sort: Desc)])
+  @@map("project_submissions")
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String   @db.VarChar(6)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@map("password_resets")
+}
